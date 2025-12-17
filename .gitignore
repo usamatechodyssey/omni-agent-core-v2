@@ -1,0 +1,27 @@
+# --- Security (Inhein kabhi upload mat karna) ---
+.env
+.env.local
+
+# --- Python Garbage ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Virtual Environment (Heavy folders) ---
+venv/
+env/
+.venv/
+
+# --- Local Databases (Railway par naya banega) ---
+omni_agent.db
+fake_ecommerce.db
+*.sqlite3
+
+# --- OS Junk ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+uploaded_files/

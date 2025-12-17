@@ -1,0 +1,37 @@
+[
+  {
+    "_id": "p1",
+    "_type": "product",
+    "title": "Classic Blue Denim Jacket",
+    "price": 59.99,
+    "inStock": true,
+    "colors": ["Blue", "Black"],
+    "description": "A timeless classic denim jacket for all seasons."
+  },
+  {
+    "_id": "p2",
+    "_type": "product",
+    "title": "Urban Running Shoes",
+    "price": 89.50,
+    "inStock": true,
+    "colors": ["White", "Grey"],
+    "description": "High performance running shoes with foam technology."
+  },
+  {
+    "_id": "p3",
+    "_type": "product",
+    "title": "Graphic Tee - Retro",
+    "price": 25.00,
+    "inStock": false,
+    "colors": ["Red"],
+    "description": "100% Cotton tee with retro print."
+  },
+  {
+    "_id": "offer1",
+    "_type": "offer",
+    "code": "SUMMER20",
+    "discount_percentage": 20,
+    "active": true,
+    "description": "Get 20% off on all summer wear."
+  }
+]

@@ -1,0 +1,28 @@
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Git
+.git
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs & Temp
+*.log
+uploaded_files/
+temp_unzip_*/
+
+# Local DBs (Don't copy local DBs into image, use volumes instead)
+omni_agent.db
+fake_ecommerce.db
