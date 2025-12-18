@@ -1,3 +1,4 @@
+# --- EXTERNAL IMPORTS ---
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import create_engine
 from backend.src.core.config import settings

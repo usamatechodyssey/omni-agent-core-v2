@@ -1,9 +1,10 @@
+import secrets # Cryptographically strong random numbers generate karne ke liye
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt
 from backend.src.core.config import settings
 
-# Password Hasher (Bcrypt)
+# Password Hasher (Bcrypt/Argon2)
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 # JWT Configuration
@@ -24,7 +25,16 @@ def create_access_token(data: dict):
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     
-    # Secret Key config se lenge (Ensure karein ke config mein ho)
     secret_key = settings.SECRET_KEY
     encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=ALGORITHM)
     return encoded_jwt
+
+# --- NEW: SaaS API KEY GENERATOR (🔐) ---
+def generate_api_key():
+    """
+    Ek unique aur secure API Key banata hai.
+    Format: omni_as87d... (64 characters long)
+    """
+    # 32 bytes ka random token jo URL-safe string ban jayega
+    random_string = secrets.token_urlsafe(32)
+    return f"omni_{random_string}"

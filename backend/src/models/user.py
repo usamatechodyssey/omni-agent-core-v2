@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text # Text add kiya
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text
 from sqlalchemy.sql import func
 from backend.src.db.base import Base
 
@@ -11,7 +11,14 @@ class User(Base):
     full_name = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     
-    # --- NEW: Bot Customization ---
+    # --- SaaS SECURITY & IDENTIFICATION (New 🔐) ---
+    # Har user ki apni unique API Key hogi
+    api_key = Column(String, unique=True, index=True, nullable=True)
+    # Konsi website par bot chal sakta hai (e.g., "usamatechodyssey.github.io")
+    # Default "*" ka matlab hai abhi har jagah chalega, baad mein lock kar sakte hain
+    allowed_domains = Column(String, default="*") 
+
+    # --- Bot Customization ---
     bot_name = Column(String, default="Support Agent")
     bot_instruction = Column(Text, default="You are a helpful customer support agent. Only answer questions related to the provided data.")
     
