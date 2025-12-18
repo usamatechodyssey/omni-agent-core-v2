@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: omni_agent_test_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app  # Hot Reloading ke liye
+      - hf_cache:/root/.cache/huggingface # AI Model Cache
+    
+    # CRITICAL: Path ko dots se theek kiya (jaisa Python ko chahiye)
+    command: >
+      sh -c "python backend/src/init_db.py &&
+             uvicorn backend.src.main:app --host 0.0.0.0 --port 8000" 
+    
+    # Ye variables sirf local testing ke liye hain
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./omni_agent.db
+      - QDRANT_HOST=localhost 
+      - MONGO_HOST=localhost
+      - PORT=8000
+      - SECRET_KEY=test_key
+      - GROQ_API_KEY=[AAPKI GROQ KEY] # Ya .env se utha lo
+    
+volumes:
+  hf_cache:
