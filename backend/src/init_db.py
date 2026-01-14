@@ -1,3 +1,4 @@
+# backend/src/init_db.py
 import asyncio
 from backend.src.db.session import engine
 from backend.src.db.base import Base

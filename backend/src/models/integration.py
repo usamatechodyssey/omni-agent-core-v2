@@ -1,4 +1,4 @@
-
+# backend/src/models/integration.py
 from sqlalchemy import Column, Integer, String, Text, Boolean, JSON, DateTime
 from sqlalchemy.sql import func
 from backend.src.db.base import Base

@@ -1,3 +1,4 @@
+# backend/src/schemas/chat.py
 from pydantic import BaseModel
 from typing import Optional
 

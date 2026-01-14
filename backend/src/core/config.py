@@ -1,3 +1,4 @@
+# backend/src/core/config.py
 # --- EXTERNAL IMPORTS ---
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict

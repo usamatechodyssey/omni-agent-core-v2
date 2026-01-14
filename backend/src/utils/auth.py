@@ -1,3 +1,4 @@
+# backend/src/utils/auth.py
 import secrets # Cryptographically strong random numbers generate karne ke liye
 from passlib.context import CryptContext
 from datetime import datetime, timedelta

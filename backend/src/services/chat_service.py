@@ -1,4 +1,5 @@
 
+# # backend/src/services/chat_service.py
 # import json
 # from sqlalchemy.ext.asyncio import AsyncSession
 # from sqlalchemy.future import select
@@ -6,7 +7,7 @@
 # # --- Model Imports ---
 # from backend.src.models.chat import ChatHistory
 # from backend.src.models.integration import UserIntegration
-# from backend.src.models.user import User  # Added User model for Bot Persona
+# from backend.src.models.user import User 
 
 # # --- Dynamic Factory & Tool Imports ---
 # from backend.src.services.llm.factory import get_llm_model
@@ -44,7 +45,6 @@
 #             creds['provider'] = i.provider
 #             creds['schema_map'] = i.schema_map if i.schema_map else {}
             
-#             # --- STRICT CHECK ---
 #             if i.profile_description:
 #                 creds['description'] = i.profile_description
             
@@ -74,7 +74,6 @@
 # async def get_bot_persona(user_id: str, db: AsyncSession):
 #     """Fetches custom Bot Name and Instructions from User table."""
 #     try:
-#         # User ID ko int mein convert karke query karein
 #         stmt = select(User).where(User.id == int(user_id))
 #         result = await db.execute(stmt)
 #         user = result.scalars().first()
@@ -88,17 +87,16 @@
 #         print(f"⚠️ Error fetching persona: {e}")
 #         pass
     
-#     # Fallback Default Persona
 #     return {"name": "OmniAgent", "instruction": "You are a helpful AI assistant."}
 
 # # ==========================================
-# # MAIN CHAT LOGIC
+# # MAIN CHAT LOGIC (Ultra-Strict Isolated Mode)
 # # ==========================================
 # async def process_chat(message: str, session_id: str, user_id: str, db: AsyncSession):
     
 #     # 1. Fetch User Settings & Persona
 #     user_settings = await get_user_integrations(user_id, db)
-#     bot_persona = await get_bot_persona(user_id, db) # <--- Persona Load kiya
+#     bot_persona = await get_bot_persona(user_id, db)
     
 #     # 2. LLM Check
 #     llm_creds = user_settings.get('groq') or user_settings.get('openai')
@@ -115,13 +113,13 @@
 #     # 4. SEMANTIC DECISION (Router)
 #     selected_provider = None
 #     if tools_map:
-#         router = SemanticRouter() # Singleton Instance
+#         router = SemanticRouter() 
 #         selected_provider = router.route(message, tools_map)
     
 #     response_text = ""
 #     provider_name = "general_chat"
 
-#     # 5. Route to Winner
+#     # 5. Route to Winner (Agent Execution)
 #     if selected_provider:
 #         print(f"👉 [Router] Selected Tool: {selected_provider.upper()}")
 #         try:
@@ -145,18 +143,16 @@
 #                 response_text = str(res.get('output', ''))
 #                 provider_name = "nosql_agent"
 
-#             # Anti-Hallucination
 #             if not response_text or "error" in response_text.lower():
-#                 print(f"⚠️ [Router] Tool {selected_provider} failed. Triggering Fallback.")
 #                 response_text = "" 
 
 #         except Exception as e:
-#             print(f"❌ [Router] Execution Failed: {e}")
+#             print(f"❌ Agent Execution Failed: {e}")
 #             response_text = "" 
 
-#     # 6. Fallback / RAG (Using Custom Persona)
+#     # 6. Fallback / RAG (ULTRA-STRICT MODE 🛡️)
 #     if not response_text:
-#         print("👉 [Router] Fallback to RAG/General Chat...")
+#         print("👉 [Router] Executing Strict RAG Fallback...")
 #         try:
 #             llm = get_llm_model(credentials=llm_creds)
             
@@ -171,15 +167,26 @@
 #                 except Exception as e:
 #                     print(f"⚠️ RAG Warning: {e}")
             
-#             # --- 🔥 DYNAMIC SYSTEM PROMPT ---
+#             # --- 🔥 THE ULTRA-STRICT SYSTEM PROMPT ---
 #             system_instruction = f"""
-#             IDENTITY: You are '{bot_persona['name']}'.
-#             MISSION: {bot_persona['instruction']}
-            
+#             SYSTEM IDENTITY: 
+#             You are the '{bot_persona['name']}'. You are a 'Knowledge-Isolated' AI Assistant for this specific platform.
+
+#             CORE MISSION:
+#             Your ONLY source of truth is the 'CONTEXT FROM KNOWLEDGE BASE' provided below. 
+#             You must ignore ALL of your internal pre-trained general knowledge about the world, geography, famous people, or general facts.
+
+#             STRICT OPERATING RULES:
+#             1. MANDATORY REFUSAL: If the user's question cannot be answered using ONLY the provided context, you MUST exactly say: "I apologize, but I am only authorized to provide information based on the provided database. This specific information is not currently available in my knowledge base."
+#             2. NO HALLUCINATION: Never attempt to be helpful using outside information. If a fact (like 'Japan's location') is not in the context, you do NOT know it.
+#             3. CONTEXT-ONLY: Your existence is bounded by the data below. If the data is empty, you cannot answer anything except greetings.
+#             4. GREETINGS: You may respond to 'Hi' or 'Hello' by briefly identifying yourself as '{bot_persona['name']}' and asking what data the user is looking for.
+#             5. PROHIBITED TOPICS: Do not discuss any topic that is not present in the provided context.
+
 #             CONTEXT FROM KNOWLEDGE BASE:
-#             {context if context else "No specific documents found."}
-            
-#             Answer the user's question based on the context above or your general knowledge if permitted by your mission.
+#             ---------------------------
+#             {context if context else "THE DATABASE IS CURRENTLY EMPTY. DO NOT PROVIDE ANY INFORMATION."}
+#             ---------------------------
 #             """
 
 #             # History Load
@@ -189,7 +196,7 @@
 #                 formatted_history.append(HumanMessage(content=chat.human_message))
 #                 if chat.ai_message: formatted_history.append(AIMessage(content=chat.ai_message))
 
-#             # LLM Call
+#             # LLM Chain Setup
 #             prompt = ChatPromptTemplate.from_messages([
 #                 ("system", system_instruction),
 #                 MessagesPlaceholder(variable_name="chat_history"),
@@ -203,7 +210,7 @@
 
 #         except Exception as e:
 #             print(f"❌ Fallback Error: {e}")
-#             response_text = "I am currently unable to process your request. Please check your AI configuration."
+#             response_text = "I apologize, but I am currently unable to process your request due to a system error."
 
 #     # 7. Save to DB
 #     await save_chat_to_db(db, session_id, message, response_text, provider_name)
@@ -211,6 +218,7 @@
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from qdrant_client.http import models # <--- NEW IMPORT (Filter ke liye)
 
 # --- Model Imports ---
 from backend.src.models.chat import ChatHistory
@@ -369,7 +377,28 @@ async def process_chat(message: str, session_id: str, user_id: str, db: AsyncSes
             if 'qdrant' in user_settings:
                 try:
                     vector_store = get_vector_store(credentials=user_settings['qdrant'])
-                    docs = await vector_store.asimilarity_search(message, k=3)
+                    
+                    # 🔥 SECURITY FIX: FILTER BY USER_ID 🔥
+                    # Hum ensure kar rahe hain ke LangChain sirf ISI USER ka data uthaye.
+                    # QdrantAdapter mein humne metadata_payload_key="metadata" set kiya tha.
+                    # Isliye key "metadata.user_id" hogi.
+                    
+                    user_filter = models.Filter(
+                        must=[
+                            models.FieldCondition(
+                                key="metadata.user_id",
+                                match=models.MatchValue(value=str(user_id))
+                            )
+                        ]
+                    )
+
+                    # Ab search mein filter pass karein
+                    docs = await vector_store.asimilarity_search(
+                        message, 
+                        k=3, 
+                        filter=user_filter
+                    )
+                    
                     if docs:
                         context = "\n\n".join([d.page_content for d in docs])
                 except Exception as e:

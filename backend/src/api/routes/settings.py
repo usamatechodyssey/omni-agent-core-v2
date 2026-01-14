@@ -1,4 +1,4 @@
-
+# backend/src/api/routes/settings.py
 # ---  ---
 import json
 from fastapi import APIRouter, Depends, HTTPException, status

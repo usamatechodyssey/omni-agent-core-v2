@@ -1,3 +1,5 @@
+# --- Git Ignore File---
+# --- Byte-compiled / optimized / DLL files ---
 # --- Security (Inhein kabhi upload mat karna) ---
 .env
 .env.local

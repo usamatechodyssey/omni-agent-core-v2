@@ -1,12 +1,21 @@
+# backend/src/main.py
 # --- EXTERNAL IMPORTS ---
 import os
+import asyncio
+import sys # <--- 1. Import asyncio
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles # <--- New Import
 from fastapi.middleware.cors import CORSMiddleware
 from backend.src.core.config import settings
-
+from backend.src.api.routes import visual
 # --- API Route Imports ---
 from backend.src.api.routes import chat, ingestion, auth, settings as settings_route
+
+# ==========================================
+# 🔥 WINDOWS FIX FOR DB TIMEOUTS 🔥
+# ==========================================
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # 1. App Initialize karein
 app = FastAPI(
@@ -47,6 +56,7 @@ app.include_router(auth.router, prefix=settings.API_V1_STR, tags=["Authenticatio
 app.include_router(settings_route.router, prefix=settings.API_V1_STR, tags=["User Settings"])
 app.include_router(chat.router, prefix=settings.API_V1_STR, tags=["Chat"])
 app.include_router(ingestion.router, prefix=settings.API_V1_STR, tags=["Ingestion"])
+app.include_router(visual.router, prefix=settings.API_V1_STR, tags=["Visual Search"])
 
 if __name__ == "__main__":
     import uvicorn

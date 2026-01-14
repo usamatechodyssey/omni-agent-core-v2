@@ -4,10 +4,10 @@
     // ----------------------------------------------------
     const scriptTag = document.currentScript;
     
-    // Ab hum User ID nahi, balki secure API Key mangenge 🔑
+    // Auth & Config
     const API_KEY = scriptTag.getAttribute("data-api-key"); 
     const API_URL = scriptTag.getAttribute("data-api-url");
-    const THEME_COLOR = scriptTag.getAttribute("data-theme-color") || "#FF0000"; // Default Red for your theme
+    const THEME_COLOR = scriptTag.getAttribute("data-theme-color") || "#0084FF"; 
 
     if (!API_KEY || !API_URL) {
         console.error("OmniAgent Security Error: data-api-key or data-api-url is missing!");
@@ -17,7 +17,7 @@
     const CHAT_SESSION_ID = "omni_session_" + Math.random().toString(36).slice(2, 11); 
 
     // ----------------------------------------------------
-    // 2. STYLES: UI & Responsive Design
+    // 2. STYLES: UI & Responsive Design (Tabs + Camera)
     // ----------------------------------------------------
     const style = document.createElement('style');
     style.innerHTML = `
@@ -27,15 +27,15 @@
         }
         #omni-chat-btn {
             background: ${THEME_COLOR}; color: white; border: none; padding: 15px; border-radius: 50%;
-            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 60px; height: 60px; font-size: 24px;
-            display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 60px; height: 60px; font-size: 28px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s;
         }
-        #omni-chat-btn:hover { transform: scale(1.1) rotate(5deg); }
+        #omni-chat-btn:hover { transform: scale(1.1); }
         
-        #omni-chat-window {
-            display: none; width: 370px; height: 550px; background: white; border-radius: 16px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden;
-            margin-bottom: 20px; border: 1px solid #f0f0f0; animation: omniSlideUp 0.4s ease;
+        #omni-window {
+            display: none; width: 380px; height: 600px; background: white; border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25); flex-direction: column; overflow: hidden;
+            margin-bottom: 20px; animation: omniSlideUp 0.3s ease; border: 1px solid #e0e0e0;
         }
         
         @keyframes omniSlideUp {
@@ -43,135 +43,241 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        #omni-header { 
-            background: ${THEME_COLOR}; color: white; padding: 18px; font-weight: 600; display: flex; 
-            justify-content: space-between; align-items: center; letter-spacing: 0.5px;
+        /* --- Header & Tabs --- */
+        #omni-header { background: ${THEME_COLOR}; padding: 15px; color: white; }
+        .omni-title { font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .omni-close { cursor: pointer; float: right; font-size: 24px; line-height: 16px; }
+
+        .omni-tabs { display: flex; background: #f1f1f1; border-bottom: 1px solid #ddd; }
+        .omni-tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600; color: #555; transition: 0.2s; }
+        .omni-tab.active { background: white; color: ${THEME_COLOR}; border-bottom: 3px solid ${THEME_COLOR}; }
+
+        /* --- Content Areas --- */
+        .omni-view { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+        .omni-view.active { display: flex; }
+
+        /* --- Chat View --- */
+        #omni-messages { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; }
+        .omni-msg { padding: 10px 14px; border-radius: 12px; max-width: 80%; font-size: 14px; line-height: 1.4; }
+        .omni-msg.user { background: ${THEME_COLOR}; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .omni-msg.bot { background: #e9eff5; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; }
+        
+        #omni-input-area { display: flex; border-top: 1px solid #eee; padding: 10px; background: white; }
+        #omni-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+        #omni-send { background: none; border: none; color: ${THEME_COLOR}; font-size: 20px; cursor: pointer; padding-left: 10px; }
+
+        /* --- Visual Search View --- */
+        #omni-visual-area { flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-y: auto; text-align: center; }
+        #omni-upload-box { 
+            border: 2px dashed #ccc; border-radius: 12px; padding: 30px; margin-bottom: 20px; 
+            width: 80%; cursor: pointer; transition: 0.2s; background: #fafafa;
         }
-        #omni-messages { flex: 1; padding: 20px; overflow-y: auto; background: #ffffff; display: flex; flex-direction: column; }
-        #omni-input-area { display: flex; border-top: 1px solid #eee; background: #fff; padding: 10px; }
-        #omni-input { flex: 1; padding: 12px; border: 1px solid #eee; border-radius: 25px; outline: none; font-size: 14px; background: #f8f9fa; }
-        #omni-send { background: transparent; border: none; color: ${THEME_COLOR}; font-weight: bold; cursor: pointer; padding: 0 12px; font-size: 22px; }
+        #omni-upload-box:hover { border-color: ${THEME_COLOR}; background: #f0f7ff; }
+        #omni-file-input { display: none; }
         
-        .omni-msg { margin: 10px 0; padding: 12px 16px; border-radius: 18px; max-width: 85%; font-size: 14px; line-height: 1.5; word-wrap: break-word; position: relative; }
-        .omni-msg.user { background: ${THEME_COLOR}; color: white; align-self: flex-end; border-bottom-right-radius: 2px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .omni-msg.bot { background: #f0f2f5; color: #1c1e21; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .omni-result-card { 
+            display: flex; align-items: center; gap: 10px; background: white; border: 1px solid #eee; 
+            padding: 10px; border-radius: 8px; width: 100%; margin-bottom: 10px; text-align: left;
+            transition: 0.2s; text-decoration: none; color: inherit;
+        }
+        .omni-result-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .omni-result-img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
         
-        /* Custom Scrollbar */
-        #omni-messages::-webkit-scrollbar { width: 5px; }
-        #omni-messages::-webkit-scrollbar-track { background: #f1f1f1; }
-        #omni-messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        .omni-loader { border: 3px solid #f3f3f3; border-top: 3px solid ${THEME_COLOR}; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     `;
     document.head.appendChild(style);
 
     // ----------------------------------------------------
-    // 3. UI LOGIC: Global Toggle Function
-    // ----------------------------------------------------
-    window.toggleOmniChat = function() {
-        const win = document.getElementById('omni-chat-window');
-        if (!win) return;
-        const isVisible = win.style.display === 'flex';
-        win.style.display = isVisible ? 'none' : 'flex';
-        if (!isVisible) {
-            document.getElementById('omni-input').focus();
-        }
-    };
-
-    // ----------------------------------------------------
-    // 4. HTML STRUCTURE: Dynamic Insertion
+    // 3. HTML STRUCTURE
     // ----------------------------------------------------
     const container = document.createElement('div');
     container.id = 'omni-widget-container';
 
     container.innerHTML = `
-        <div id="omni-chat-window">
+        <div id="omni-window">
             <div id="omni-header">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:10px; height:10px; background:#2ecc71; border-radius:50%;"></div>
-                    <span>AI Knowledge Assistant</span>
+                <span class="omni-close" onclick="window.toggleOmni()">×</span>
+                <div class="omni-title">
+                    <span>🤖 AI Assistant</span>
                 </div>
-                <span style="cursor:pointer; font-size: 24px; font-weight:300;" onclick="window.toggleOmniChat()">×</span>
             </div>
-            <div id="omni-messages"></div>
-            <div id="omni-input-area">
-                <input type="text" id="omni-input" placeholder="Type a message..." autocomplete="off" />
-                <button id="omni-send">➤</button>
+            
+            <div class="omni-tabs">
+                <div class="omni-tab active" onclick="window.switchTab('chat')">💬 Chat</div>
+                <div class="omni-tab" onclick="window.switchTab('visual')">📷 Visual Search</div>
+            </div>
+
+            <!-- CHAT VIEW -->
+            <div id="omni-chat-view" class="omni-view active">
+                <div id="omni-messages"></div>
+                <div id="omni-input-area">
+                    <input type="text" id="omni-input" placeholder="Ask anything..." autocomplete="off" />
+                    <button id="omni-send">➤</button>
+                </div>
+            </div>
+
+            <!-- VISUAL VIEW -->
+            <div id="omni-visual-view" class="omni-view">
+                <div id="omni-visual-area">
+                    <div id="omni-upload-box" onclick="document.getElementById('omni-file-input').click()">
+                        <div style="font-size:40px; margin-bottom:10px;">📤</div>
+                        <p style="margin:0; color:#666;">Click to Upload Image</p>
+                        <p style="margin:0; font-size:12px; color:#999;">Find similar products</p>
+                    </div>
+                    <input type="file" id="omni-file-input" accept="image/*">
+                    <div id="omni-visual-loader" class="omni-loader"></div>
+                    <div id="omni-visual-results" style="width:100%;"></div>
+                </div>
             </div>
         </div>
-        <button id="omni-chat-btn" onclick="window.toggleOmniChat()">💬</button>
+        <button id="omni-chat-btn" onclick="window.toggleOmni()">💬</button>
     `;
 
     document.body.appendChild(container);
 
     // ----------------------------------------------------
-    // 5. CHAT ENGINE: Fetch & Security Headers
+    // 4. UI LOGIC (Toggle & Tabs)
     // ----------------------------------------------------
-    const inputField = document.getElementById('omni-input');
-    const sendButton = document.getElementById('omni-send');
-    const messagesContainer = document.getElementById('omni-messages');
+    window.toggleOmni = function() {
+        const win = document.getElementById('omni-window');
+        const isVisible = win.style.display === 'flex';
+        win.style.display = isVisible ? 'none' : 'flex';
+    };
 
-    function addMessage(text, sender) {
-        const div = document.createElement('div');
-        div.className = `omni-msg ${sender}`;
-        // URL auto-linking logic
-        div.innerHTML = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color:inherit; text-decoration:underline;">$1</a>');
-        messagesContainer.appendChild(div);
-        messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: 'smooth' });
-    }
+    window.switchTab = function(tab) {
+        document.querySelectorAll('.omni-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.omni-view').forEach(v => v.classList.remove('active'));
+
+        if (tab === 'chat') {
+            document.querySelector('.omni-tabs .omni-tab:nth-child(1)').classList.add('active');
+            document.getElementById('omni-chat-view').classList.add('active');
+        } else {
+            document.querySelector('.omni-tabs .omni-tab:nth-child(2)').classList.add('active');
+            document.getElementById('omni-visual-view').classList.add('active');
+        }
+    };
+
+    // ----------------------------------------------------
+    // 5. CHAT ENGINE
+    // ----------------------------------------------------
+    const chatInput = document.getElementById('omni-input');
+    const sendBtn = document.getElementById('omni-send');
+    const msgContainer = document.getElementById('omni-messages');
 
     async function sendMessage() {
-        const text = inputField.value.trim();
+        const text = chatInput.value.trim();
         if (!text) return;
 
-        addMessage(text, 'user');
-        inputField.value = '';
+        addMsg(text, 'user');
+        chatInput.value = '';
         
-        // Loading dots logic
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'omni-msg bot';
-        loadingDiv.innerHTML = '<span class="omni-dots">...</span>';
-        messagesContainer.appendChild(loadingDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        loadingDiv.innerHTML = '...';
+        msgContainer.appendChild(loadingDiv);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
 
         try {
             const response = await fetch(`${API_URL}/api/v1/chat`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: text,
                     session_id: CHAT_SESSION_ID,
-                    api_key: API_KEY // 🔑 Secure Auth
+                    api_key: API_KEY // Auth
                 })
             });
-
+            
+            msgContainer.removeChild(loadingDiv);
             const data = await response.json();
-            messagesContainer.removeChild(loadingDiv);
-
-            if (response.status === 401) {
-                addMessage("🚫 Security Error: Invalid API Key.", 'bot');
-            } else if (response.status === 403) {
-                addMessage("🚫 Security Error: Domain not authorized.", 'bot');
+            
+            if (response.ok) {
+                addMsg(data.response, 'bot');
             } else {
-                addMessage(data.response || "I couldn't process that. Please try again.", 'bot'); 
+                addMsg("⚠️ Error: " + (data.detail || "Server error"), 'bot');
             }
 
-        } catch (error) {
-            if (loadingDiv.parentNode) messagesContainer.removeChild(loadingDiv);
-            addMessage("📡 Connection lost. Is the AI server online?", 'bot');
-            console.error("OmniAgent API Error:", error);
+        } catch (e) {
+            if(loadingDiv.parentNode) msgContainer.removeChild(loadingDiv);
+            addMsg("📡 Connection Error", 'bot');
         }
     }
 
-    // Event Listeners
-    sendButton.addEventListener('click', sendMessage);
-    inputField.addEventListener('keypress', (e) => { 
-        if(e.key === 'Enter') { sendMessage(); }
-    });
+    function addMsg(text, sender) {
+        const div = document.createElement('div');
+        div.className = `omni-msg ${sender}`;
+        div.innerText = text; // Secure text insertion
+        msgContainer.appendChild(div);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
 
-    // Initial Welcome (AI Persona)
-    setTimeout(() => {
-        addMessage("Hello! I am your AI assistant. How can I help you today?", "bot");
-    }, 1500);
+    sendBtn.onclick = sendMessage;
+    chatInput.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+
+    // ----------------------------------------------------
+    // 6. VISUAL SEARCH ENGINE
+    // ----------------------------------------------------
+    const fileInput = document.getElementById('omni-file-input');
+    const visualLoader = document.getElementById('omni-visual-loader');
+    const visualResults = document.getElementById('omni-visual-results');
+
+    fileInput.onchange = async function() {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        visualLoader.style.display = 'block';
+        visualResults.innerHTML = '';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch(`${API_URL}/api/v1/visual/search`, {
+                method: 'POST',
+                headers: { 
+                    'x-api-key': API_KEY // Header Auth ✅
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+            visualLoader.style.display = 'none';
+
+            if (!response.ok) {
+                visualResults.innerHTML = `<p style="color:red; margin-top:20px;">Error: ${data.detail}</p>`;
+                return;
+            }
+
+            if (!data.results || data.results.length === 0) {
+                visualResults.innerHTML = '<p style="color:#777; margin-top:20px;">No similar products found.</p>';
+                return;
+            }
+
+            // Render Results
+            data.results.forEach(item => {
+                const score = (item.similarity * 100).toFixed(0);
+                const el = document.createElement('a');
+                el.className = 'omni-result-card';
+                el.href = `/product/${item.slug || '#'}`; // Dynamic link
+                el.target = '_blank';
+                el.innerHTML = `
+                    <img src="${item.image_path}" class="omni-result-img" onerror="this.src='https://via.placeholder.com/60'">
+                    <div>
+                        <div style="font-weight:bold; font-size:14px;">Product Match</div>
+                        <div style="font-size:12px; color:#27ae60;">${score}% Similarity</div>
+                    </div>
+                `;
+                visualResults.appendChild(el);
+            });
+
+        } catch (e) {
+            visualLoader.style.display = 'none';
+            visualResults.innerHTML = '<p style="color:red;">Connection Failed</p>';
+        }
+    };
+
+    // Initial Hello
+    setTimeout(() => addMsg("Hi! I can help you find products by chatting or uploading an image.", "bot"), 1000);
 
 })();
