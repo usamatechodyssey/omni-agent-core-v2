@@ -34,5 +34,6 @@ ENV PYTHONPATH=/app:$PYTHONPATH
 # 7. Expose Port
 EXPOSE 8000
 
-# 8. Run Command (Ye line Docker Compose se Override ho jayegi)
-CMD ["uvicorn", "backend.src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 8. Run Command (Universal Logic)
+# Yeh check karega: Agar server ne PORT diya hai to wo use karo, warna 8000 use karo.
+CMD uvicorn backend.src.main:app --host 0.0.0.0 --port ${PORT:-8000}
